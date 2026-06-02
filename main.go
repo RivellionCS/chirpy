@@ -5,6 +5,10 @@ import (
 	"net/http"
 )
 
+func main() {
+	buildAndStartServer()
+}
+
 func buildAndStartServer() error {
 	serve := http.NewServeMux()
 	server := http.Server{
