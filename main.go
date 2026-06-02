@@ -10,11 +10,11 @@ func main() {
 }
 
 func buildAndStartServer() error {
-	serve := http.NewServeMux()
+	mux := http.NewServeMux()
 	indexFilepath := http.Dir(".")
-	serve.Handle("/", http.FileServer(indexFilepath))
+	mux.Handle("/", http.FileServer(indexFilepath))
 	server := http.Server{
-		Handler: serve,
+		Handler: mux,
 		Addr: ":8080",
 	}
 	err := server.ListenAndServe()
