@@ -11,6 +11,8 @@ func main() {
 
 func buildAndStartServer() error {
 	serve := http.NewServeMux()
+	indexFilepath := http.Dir(".")
+	serve.Handle("/", http.FileServer(indexFilepath))
 	server := http.Server{
 		Handler: serve,
 		Addr: ":8080",
