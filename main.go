@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -9,17 +9,15 @@ func main() {
 	buildAndStartServer()
 }
 
-func buildAndStartServer() error {
+func buildAndStartServer() {
+	const filepathRoot = "."
+	const port = "8080"
 	mux := http.NewServeMux()
-	indexFilepath := http.Dir(".")
-	mux.Handle("/", http.FileServer(indexFilepath))
+	mux.Handle("/", http.FileServer(http.Dir(filepathRoot)))
 	server := http.Server{
 		Handler: mux,
-		Addr: ":8080",
+		Addr: ":" + port,
 	}
-	err := server.ListenAndServe()
-	if err != nil {
-		return fmt.Errorf("error starting server: %v", err)
-	}
-	return nil
+	log.Printf("Serving files from %s on port: %s", filepathRoot, port)
+	log.Fatal(server.ListenAndServe())
 }
