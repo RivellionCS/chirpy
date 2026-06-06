@@ -67,7 +67,7 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Body string `json: "body"`
+		Body string `json:"body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -88,7 +88,7 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 	respBody := returnVals{
 		Error: msg,
 	}
-	dat, err :+ json.Marshal(respBody)
+	dat, err := json.Marshal(respBody)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(500)
