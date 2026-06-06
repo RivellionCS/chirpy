@@ -24,6 +24,7 @@ func buildAndStartServer() {
 	mux.HandleFunc("GET /api/healthz", myHandler)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
+	mux.HandleFunc("POST /api/validate_chirp", apiCfg.handlerValidateChirp)
 	server := http.Server{
 		Handler: mux,
 		Addr: ":" + port,
