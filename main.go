@@ -69,12 +69,16 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 	type parameters struct {
 		Body string `json:"body"`
 	}
+	type returnVals struct {
+		Valid bool `json:"valid"`
+	}
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
+		respondWithError(w, 500, "Error decoding parameters")
 		return
 	}
 	if len(params.Body) > 140 {
