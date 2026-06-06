@@ -20,10 +20,10 @@ func buildAndStartServer() {
 	const port = "8080"
 	apiCfg := apiConfig{}
 	mux := http.NewServeMux()
-	mux.Handle("/app/", http.StripPrefix("/app", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot)))))
-	mux.HandleFunc("GET /healthz", myHandler)
-	mux.HandleFunc("GET /metrics", apiCfg.handlerMetrics)
-	mux.HandleFunc("POST /reset", apiCfg.handlerReset)
+	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
+	mux.HandleFunc("GET /api/healthz", myHandler)
+	mux.HandleFunc("GET /api/metrics", apiCfg.handlerMetrics)
+	mux.HandleFunc("POST /api/reset", apiCfg.handlerReset)
 	server := http.Server{
 		Handler: mux,
 		Addr: ":" + port,
@@ -48,7 +48,7 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	str := fmt.Sprintf("Hits: %d\n", cfg.fileserverHits.Load())
+	str := fmt.Sprintf("Hits: %d", cfg.fileserverHits.Load())
 	w.Write([]byte(str))
 }
 
