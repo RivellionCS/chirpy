@@ -75,7 +75,10 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 	err := decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
-		respondWithError(w, 400, "chirp is too long")
+		return
+	}
+	if len(params.Body) > 140 {
+		respondWithError(w, 400, "Chirp is too long")
 		return
 	}
 	respondWithJSON(w, http.StatusOK, returnVals{Valid: true})
