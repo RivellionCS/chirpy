@@ -80,3 +80,21 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 	}
 	respondWithJSON(w, http.StatusOK, returnVals{Valid: true})
 }
+
+func respondWithError(w http.ResponseWriter, code int, msg string) {
+	type returnVals struct {
+		Error string `json:"error"`
+	}
+	respBody := returnVals{
+		Error: msg,
+	}
+	dat, err :+ json.Marshal(respBody)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(dat)
+}
