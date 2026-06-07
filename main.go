@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -70,7 +71,7 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 		Body string `json:"body"`
 	}
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -85,7 +86,7 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 		respondWithError(w, 400, "Chirp is too long")
 		return
 	}
-	respondWithJSON(w, http.StatusOK, returnVals{Valid: true})
+	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: params.Body})
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
@@ -116,4 +117,21 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(dat)
+}
+
+func getCleanedBody(body string) string {
+	profanities := map[string]struct{}{
+		"kerfuffle": {},
+		"sharbert": {},
+		"fornax": {},
+	}
+	strArray := strings.Split(body, " ")
+	for i, word := range strArray {
+		_, ok := profanities[strings.ToLower(word)]
+		if ok {
+			strArray[i] = "****"
+		}
+	}
+	cleanedBody := strings.Join(strArray, " ")
+	return cleanedBody
 }
