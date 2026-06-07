@@ -86,7 +86,7 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 		respondWithError(w, 400, "Chirp is too long")
 		return
 	}
-	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: params.Body})
+	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: getCleanedBody(params.Body)})
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
