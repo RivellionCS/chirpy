@@ -1,18 +1,23 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
 
+	"github.com/RivellionCS/chirpy/internal/database"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	databaseQuueries *database.Queries
 }
 
 func main() {
@@ -20,9 +25,16 @@ func main() {
 }
 
 func buildAndStartServer() {
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Printf("Error connecting to database: %v", err)
+	}
+	dbQueries := database.New(db)
 	const filepathRoot = "."
 	const port = "8080"
-	apiCfg := apiConfig{}
+	apiCfg := apiConfig{databaseQuueries: dbQueries}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 	mux.HandleFunc("GET /api/healthz", myHandler)
