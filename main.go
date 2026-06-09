@@ -20,6 +20,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	databaseQueries *database.Queries
+	Platform string
 }
 
 type User struct {
@@ -36,6 +37,7 @@ func main() {
 func buildAndStartServer() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Printf("Error connecting to database: %v", err)
@@ -43,7 +45,10 @@ func buildAndStartServer() {
 	dbQueries := database.New(db)
 	const filepathRoot = "."
 	const port = "8080"
-	apiCfg := apiConfig{databaseQueries: dbQueries}
+	apiCfg := apiConfig{
+		databaseQueries: dbQueries,
+		Platform: platform,
+	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 	mux.HandleFunc("GET /api/healthz", myHandler)
@@ -85,6 +90,11 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
+	if cfg.Platform != "dev" {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(403)
+		return
+	}
 	cfg.databaseQueries.DeleteUsers(r.Context())
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
