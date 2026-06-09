@@ -19,7 +19,7 @@ import (
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
-	databaseQuueries *database.Queries
+	databaseQueries *database.Queries
 }
 
 type User struct {
@@ -43,7 +43,7 @@ func buildAndStartServer() {
 	dbQueries := database.New(db)
 	const filepathRoot = "."
 	const port = "8080"
-	apiCfg := apiConfig{databaseQuueries: dbQueries}
+	apiCfg := apiConfig{databaseQueries: dbQueries}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 	mux.HandleFunc("GET /api/healthz", myHandler)
