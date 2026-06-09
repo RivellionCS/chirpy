@@ -92,13 +92,13 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	if cfg.Platform != "dev" {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 	err := cfg.databaseQueries.DeleteUsers(r.Context())
 	if err != nil {
 		log.Printf("Error deleting users: %s", err)
-		respondWithError(w, http.StatusForbidden, "could not delete users")
+		respondWithError(w, http.StatusInternalServerError, "could not delete users")
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
