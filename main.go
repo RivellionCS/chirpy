@@ -104,6 +104,10 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: getCleanedBody(params.Body)})
 }
 
+func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+	
+}
+
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	type returnVals struct {
 		Error string `json:"error"`
