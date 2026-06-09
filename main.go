@@ -114,7 +114,32 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Email string `json:"email"`
+	}
 
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		log.Printf("Error decoding parameters: %s", err)
+		respondWithError(w, 500, "could not decode email")
+		return
+	}
+
+	user, err := cfg.databaseQueries.CreateUser(r.Context(), params.Email)
+	if err != nil {
+		log.Printf("Error creating user: %s", err)
+		respondWithError(w, 500, "could not create user")
+		return
+	}
+	userStruct := User{
+		ID: user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email: user.Email,
+	}
+	respondWithJSON(w, 201, userStruct)
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
