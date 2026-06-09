@@ -92,10 +92,15 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	if cfg.Platform != "dev" {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(403)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	cfg.databaseQueries.DeleteUsers(r.Context())
+	err := cfg.databaseQueries.DeleteUsers(r.Context())
+	if err != nil {
+		log.Printf("Error deleting users: %s", err)
+		respondWithError(w, http.StatusForbidden, "could not delete users")
+		return
+	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	cfg.fileserverHits.Store(0)
@@ -114,11 +119,11 @@ func (cfg *apiConfig) handlerValidateChirp(w http.ResponseWriter, r *http.Reques
 	err := decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
-		respondWithError(w, 500, "Error decoding parameters")
+		respondWithError(w, http.StatusInternalServerError, "Error decoding parameters")
 		return
 	}
 	if len(params.Body) > 140 {
-		respondWithError(w, 400, "Chirp is too long")
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
 		return
 	}
 	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: getCleanedBody(params.Body)})
@@ -134,14 +139,14 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	err := decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
-		respondWithError(w, 500, "could not decode email")
+		respondWithError(w, http.StatusInternalServerError, "could not decode email")
 		return
 	}
 
 	user, err := cfg.databaseQueries.CreateUser(r.Context(), params.Email)
 	if err != nil {
 		log.Printf("Error creating user: %s", err)
-		respondWithError(w, 500, "could not create user")
+		respondWithError(w, http.StatusInternalServerError, "could not create user")
 		return
 	}
 	userStruct := User{
@@ -150,7 +155,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
 	}
-	respondWithJSON(w, 201, userStruct)
+	respondWithJSON(w, http.StatusCreated, userStruct)
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
@@ -163,7 +168,7 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 	dat, err := json.Marshal(respBody)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -175,7 +180,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	dat, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
