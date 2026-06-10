@@ -2,13 +2,10 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"sync/atomic"
-	"time"
 
 	"github.com/RivellionCS/chirpy/internal/database"
 	"github.com/google/uuid"
@@ -20,14 +17,6 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	databaseQueries *database.Queries
 	platform string
-}
-
-type Chirp struct {
-	ID uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Body string `json:"body"`
-	UserID uuid.UUID `json:"user_id"`
 }
 
 func main() {
@@ -55,7 +44,7 @@ func buildAndStartServer() {
 	mux.HandleFunc("GET /api/healthz", myHandlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
-	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
+	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirps)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUsers)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirpById)
@@ -91,45 +80,6 @@ func (cfg *apiConfig) handlerGetChirpById(w http.ResponseWriter, r *http.Request
 	respondWithJSON(w, http.StatusOK, chirpJSON)
 }
 
-func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Body string `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		log.Printf("Error decoding parameters: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "Error decoding parameters")
-		return
-	}
-	params.Body = getCleanedBody(params.Body)
-	if len(params.Body) > 140 {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
-		return
-	}
-	chirpParams := database.CreateChirpParams{
-		Body: params.Body,
-		UserID: params.UserID,
-	}
-	chirp, err := cfg.databaseQueries.CreateChirp(r.Context(), chirpParams)
-	if err != nil {
-		log.Printf("Error creating chirp: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "Error creating chirp")
-		return
-	}
-	chirpJSON := Chirp{
-		ID: chirp.ID,
-		CreatedAt: chirp.CreatedAt,
-		UpdatedAt: chirp.UpdatedAt,
-		Body: chirp.Body,
-		UserID: chirp.UserID,
-	}
-	respondWithJSON(w, http.StatusCreated, chirpJSON)
-}
-
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
 	chirps, err := cfg.databaseQueries.GetAllChirps(r.Context())
 	if err != nil {
@@ -149,21 +99,4 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 		chirpsSlice = append(chirpsSlice, chirpJSON)
 	}
 	respondWithJSON(w, http.StatusOK, chirpsSlice)
-}
-
-func getCleanedBody(body string) string {
-	profanities := map[string]struct{}{
-		"kerfuffle": {},
-		"sharbert": {},
-		"fornax": {},
-	}
-	strArray := strings.Split(body, " ")
-	for i, word := range strArray {
-		_, ok := profanities[strings.ToLower(word)]
-		if ok {
-			strArray[i] = "****"
-		}
-	}
-	cleanedBody := strings.Join(strArray, " ")
-	return cleanedBody
 }
