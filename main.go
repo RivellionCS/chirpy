@@ -117,7 +117,7 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
-		UserID string `json:"user_id"`
+		UserID uuid.UUID `json:"user_id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -133,15 +133,9 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
 		return
 	}
-	userUUID, err := uuid.Parse(params.UserID)
-	if err != nil {
-		log.Printf("Error parsing userId to UUID: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "Error creating chirp")
-		return
-	}
 	chirpParams := database.CreateChirpParams{
 		Body: params.Body,
-		UserID: userUUID,
+		UserID: params.UserID,
 	}
 	chirp, err := cfg.databaseQueries.CreateChirp(r.Context(), chirpParams)
 	if err != nil {
