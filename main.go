@@ -49,6 +49,7 @@ func buildAndStartServer() {
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Printf("Error connecting to database: %v", err)
+		return
 	}
 	dbQueries := database.New(db)
 	const filepathRoot = "."
@@ -121,7 +122,7 @@ func (cfg *apiConfig) handlerGetChirpById(w http.ResponseWriter, r *http.Request
 	chirpID, err := uuid.Parse(chirpIDStr)
 	if err != nil {
 		log.Printf("Error parsing chirp id: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "error getting chirp")
+		respondWithError(w, http.StatusBadRequest, "error getting chirp")
 		return
 	}
 	chirp, err := cfg.databaseQueries.GetChirpByID(r.Context(), chirpID)
