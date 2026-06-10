@@ -20,7 +20,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	databaseQueries *database.Queries
-	Platform string
+	platform string
 }
 
 type User struct {
@@ -56,7 +56,7 @@ func buildAndStartServer() {
 	const port = "8080"
 	apiCfg := apiConfig{
 		databaseQueries: dbQueries,
-		Platform: platform,
+		platform: platform,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
@@ -101,7 +101,7 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
-	if cfg.Platform != "dev" {
+	if cfg.platform != "dev" {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusForbidden)
 		return
