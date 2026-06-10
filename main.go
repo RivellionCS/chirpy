@@ -65,6 +65,7 @@ func buildAndStartServer() {
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetAllChirps)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirpById)
 	server := http.Server{
 		Handler: mux,
 		Addr: ":" + port,
@@ -113,6 +114,30 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	cfg.fileserverHits.Store(0)
+}
+
+func (cfg *apiConfig) handlerGetChirpById(w http.ResponseWriter, r *http.Request) {
+	chirpIDStr := r.PathValue("chirpID")
+	chirpID, err := uuid.Parse(chirpIDStr)
+	if err != nil {
+		log.Printf("Error parsing chirp id: %s", err)
+		respondWithError(w, http.StatusInternalServerError, "error getting chirp")
+		return
+	}
+	chirp, err := cfg.databaseQueries.GetChirpByID(r.Context(), chirpID)
+	if err != nil {
+		log.Printf("Error getting chirp: %s", err)
+		respondWithError(w, http.StatusNotFound, "error getting chirp")
+		return
+	}
+	chirpJSON := Chirp{
+		ID: chirpID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body: chirp.Body,
+		UserID: chirp.UserID,
+	}
+	respondWithJSON(w, http.StatusOK, chirpJSON)
 }
 
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
