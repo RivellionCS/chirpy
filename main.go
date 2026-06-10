@@ -22,13 +22,6 @@ type apiConfig struct {
 	platform string
 }
 
-type User struct {
-	ID uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email string `json:"email"`
-}
-
 type Chirp struct {
 	ID uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -63,7 +56,7 @@ func buildAndStartServer() {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
-	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUsers)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirpById)
 	server := http.Server{
@@ -156,35 +149,6 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 		chirpsSlice = append(chirpsSlice, chirpJSON)
 	}
 	respondWithJSON(w, http.StatusOK, chirpsSlice)
-}
-
-func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Email string `json:"email"`
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		log.Printf("Error decoding parameters: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "could not decode email")
-		return
-	}
-
-	user, err := cfg.databaseQueries.CreateUser(r.Context(), params.Email)
-	if err != nil {
-		log.Printf("Error creating user: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "could not create user")
-		return
-	}
-	userStruct := User{
-		ID: user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email: user.Email,
-	}
-	respondWithJSON(w, http.StatusCreated, userStruct)
 }
 
 func getCleanedBody(body string) string {
