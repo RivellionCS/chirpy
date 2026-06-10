@@ -74,12 +74,6 @@ func buildAndStartServer() {
 	log.Fatal(server.ListenAndServe())
 }
 
-func myHandlerReadiness(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(http.StatusText(http.StatusOK)))
-}
-
 func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	if cfg.platform != "dev" {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
