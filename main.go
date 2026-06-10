@@ -64,6 +64,7 @@ func buildAndStartServer() {
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
+	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetAllChirps)
 	server := http.Server{
 		Handler: mux,
 		Addr: ":" + port,
@@ -151,6 +152,27 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		UserID: chirp.UserID,
 	}
 	respondWithJSON(w, http.StatusCreated, chirpJSON)
+}
+
+func (cfg *apiConfig) handleGetAllChirps(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.databaseQueries.GetAllChirps(r.Context())
+	if err != nil {
+		log.Printf("Error getting all chirps: %s", err)
+		respondWithError(w, http.StatusInternalServerError, "Error getting all chirps")
+		return
+	}
+	chirpsSlice := []Chirp{}
+	for _, chirp := range chirps {
+		chirpJSON := Chirp{
+			ID: chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body: chirp.Body,
+			UserID: chirp.UserID,
+		}
+		chirpsSlice = append(chirpsSlice, chirpJSON)
+	}
+	respondWithJSON(w, http.StatusOK, chirpsSlice)
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
