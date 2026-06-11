@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/RivellionCS/chirpy/internal/auth"
+	"github.com/RivellionCS/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -20,6 +22,7 @@ type User struct {
 func (cfg *apiConfig) handlerCreateUsers(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -27,11 +30,20 @@ func (cfg *apiConfig) handlerCreateUsers(w http.ResponseWriter, r *http.Request)
 	err := decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "could not decode email")
+		respondWithError(w, http.StatusInternalServerError, "could not decode json")
 		return
 	}
 
-	user, err := cfg.databaseQueries.CreateUser(r.Context(), params.Email)
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
+		log.Printf("Error hashing password: %s", err)
+		return
+	}
+	userParams := database.CreateUserParams{
+		Email: params.Email,
+		HashedPassword: hashedPassword,
+	}
+	user, err := cfg.databaseQueries.CreateUser(r.Context(), userParams)
 	if err != nil {
 		log.Printf("Error creating user: %s", err)
 		respondWithError(w, http.StatusInternalServerError, "could not create user")
@@ -42,6 +54,7 @@ func (cfg *apiConfig) handlerCreateUsers(w http.ResponseWriter, r *http.Request)
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
+		Password: params.Password,
 	}
 	respondWithJSON(w, http.StatusCreated, userStruct)
 }
