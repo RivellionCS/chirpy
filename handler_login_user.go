@@ -19,19 +19,19 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding json: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "error logging in")
+		respondWithError(w, http.StatusBadRequest, "error logging in")
 		return
 	}
 	user, err := cfg.databaseQueries.GetUserByEmail(r.Context(), params.Email)
 	if err != nil {
 		log.Printf("Error getting user: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "error getting user")
+		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password")
 		return
 	}
 	check, err := auth.CheckPasswordHash(params.Password, user.HashedPassword)
 	if err != nil {
 		log.Printf("Error checking password and hash: %s", err)
-		respondWithError(w, http.StatusInternalServerError, "error checking password")
+		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password")
 		return
 	}
 	if check {
