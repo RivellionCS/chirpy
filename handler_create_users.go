@@ -16,7 +16,6 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email string `json:"email"`
-	Password string `json:"password"`
 }
 
 func (cfg *apiConfig) handlerCreateUsers(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +53,6 @@ func (cfg *apiConfig) handlerCreateUsers(w http.ResponseWriter, r *http.Request)
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
-		Password: params.Password,
 	}
 	respondWithJSON(w, http.StatusCreated, userStruct)
 }
