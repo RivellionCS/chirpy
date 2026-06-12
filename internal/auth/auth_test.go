@@ -157,3 +157,26 @@ func TestMakeJWT(t *testing.T) {
 		t.Errorf("got %v, want %v", gotUserID, userID)
 	}
 }
+
+func TestValidateJWT_ExpiredToken(t *testing.T) {
+	userID := uuid.New()
+	secret := "test-secret"
+
+	// create a token that expires immediately
+	tokenString, err := MakeJWT(userID, secret, 1*time.Nanosecond)
+	if err != nil {
+		t.Fatalf("failed to create token: %v", err)
+	}
+
+	// ensure it's expired
+	time.Sleep(10 * time.Millisecond)
+
+	gotUserID, err := ValidateJWT(tokenString, secret)
+	if err == nil {
+		t.Fatalf("expected error for expired token, got none")
+	}
+
+	if gotUserID != uuid.Nil {
+		t.Errorf("expected uuid.Nil, got %v", gotUserID)
+	}
+}
