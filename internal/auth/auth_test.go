@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -178,5 +179,60 @@ func TestValidateJWT_ExpiredToken(t *testing.T) {
 
 	if gotUserID != uuid.Nil {
 		t.Errorf("expected uuid.Nil, got %v", gotUserID)
+	}
+}
+
+func TestGetBearerToken(t *testing.T) {
+	tests := []struct {
+		name string
+		headerValue string
+		expected string
+		expectError bool
+	}{
+		{
+			name: "valid input",
+			headerValue: "Bearer mytoken",
+			expected: "mytoken",
+			expectError: false,
+		},
+		{
+			name: "empty input",
+			headerValue: "",
+			expected: "",
+			expectError: true,
+		},
+		{
+			name: "wrong input",
+			headerValue: "Bearermytoken",
+			expected: "",
+			expectError: true,
+		},
+		{
+			name: "empty token",
+			headerValue: "Bearer ",
+			expected: "",
+			expectError: true,
+		},
+		
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			headers := http.Header{}
+			headers.Set("Authorization", tt.headerValue)
+			result, err := GetBearerToken(headers)
+
+			if !tt.expectError && err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+
+			if !tt.expectError && result != tt.expected {
+				t.Errorf("expected mytoken but got something else: %v", result)
+			}
+		})
 	}
 }
