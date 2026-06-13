@@ -16,6 +16,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	databaseQueries *database.Queries
 	platform string
+	jwtKey string
 }
 
 func main() {
@@ -26,6 +27,7 @@ func buildAndStartServer() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	jwtKey := os.Getenv("JWT_SECRET")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Printf("Error connecting to database: %v", err)
@@ -37,6 +39,7 @@ func buildAndStartServer() {
 	apiCfg := apiConfig{
 		databaseQueries: dbQueries,
 		platform: platform,
+		jwtKey: jwtKey,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
