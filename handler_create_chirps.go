@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/RivellionCS/chirpy/internal/auth"
 	"github.com/RivellionCS/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -20,14 +21,26 @@ type Chirp struct {
 }
 
 func (cfg *apiConfig) handlerCreateChirps(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		log.Printf("Error getting token: %s", err)
+		respondWithError(w, http.StatusUnauthorized, "error validating token")
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.jwtKey)
+	if err != nil {
+		log.Printf("Error validating token: %s", err)
+		respondWithError(w, http.StatusUnauthorized, "error validating token")
+		return
+	}
+
 	type parameters struct {
 		Body string `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		respondWithError(w, http.StatusInternalServerError, "Error decoding parameters")
@@ -40,7 +53,7 @@ func (cfg *apiConfig) handlerCreateChirps(w http.ResponseWriter, r *http.Request
 	}
 	chirpParams := database.CreateChirpParams{
 		Body: params.Body,
-		UserID: params.UserID,
+		UserID: userID,
 	}
 	chirp, err := cfg.databaseQueries.CreateChirp(r.Context(), chirpParams)
 	if err != nil {
