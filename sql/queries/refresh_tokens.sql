@@ -9,3 +9,11 @@ VALUES (
     NULL
 )
 RETURNING *;
+
+-- name: GetUserFromRefreshToken :one
+SELECT * FROM refresh_tokens
+INNER JOIN users
+    ON refresh_tokens.user_id = users.id
+WHERE token = $1
+AND expires_at > NOW()
+AND revoked_at IS NULL;
