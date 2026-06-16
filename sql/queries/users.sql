@@ -16,7 +16,7 @@ DELETE FROM users;
 SELECT * FROM users
 WHERE email = $1;
 
--- name: UpdateUserEmailAndPassword :exec
+-- name: UpdateUserEmailAndPassword :one
 UPDATE users
 SET updated_at = NOW(),
     email = $2,
