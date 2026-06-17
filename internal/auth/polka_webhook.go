@@ -13,11 +13,11 @@ func GetAPIKey(headers http.Header) (string, error) {
 		return "", fmt.Errorf("Header is empty")
 	}
 
-	if !strings.HasPrefix(apiHeader, " ApiKey ") {
-		return "", fmt.Errorf("Header must start with ' ApiKey '")
+	if !strings.HasPrefix(apiHeader, "ApiKey ") {
+		return "", fmt.Errorf("Header must start with 'ApiKey '")
 	}
 
-	apiKey := strings.TrimSpace(strings.TrimPrefix(apiHeader, " ApiKey "))
+	apiKey := strings.TrimSpace(strings.TrimPrefix(apiHeader, "ApiKey "))
 
 	if apiKey == "" {
 		return "", fmt.Errorf("ApiKey is empty")
