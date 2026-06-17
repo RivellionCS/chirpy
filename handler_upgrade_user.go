@@ -5,10 +5,24 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/RivellionCS/chirpy/internal/auth"
 	"github.com/google/uuid"
 )
 
 func(cfg *apiConfig) handlerUpgradeUser(w http.ResponseWriter, r *http.Request) {
+	polkaApiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		log.Printf("error getting apikey: %s", err)
+		respondWithError(w, http.StatusUnauthorized, "error getting apikey")
+		return
+	}
+
+	if polkaApiKey != cfg.polkaKey {
+		log.Printf("error api keys do not match: %s", err)
+		respondWithError(w, http.StatusUnauthorized, "api keys do not match")
+		return
+	}
+
 	type parameters struct {
 		Event string `json:"event"`
 		Data struct {
@@ -18,7 +32,7 @@ func(cfg *apiConfig) handlerUpgradeUser(w http.ResponseWriter, r *http.Request) 
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		log.Printf("error decoding body: %s", err)
 		respondWithError(w, http.StatusInternalServerError, "error decoding body")
