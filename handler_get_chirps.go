@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"sort"
 
 	"github.com/RivellionCS/chirpy/internal/database"
 	"github.com/google/uuid"
@@ -37,6 +38,17 @@ func (cfg *apiConfig) handlerGetChirpById(w http.ResponseWriter, r *http.Request
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
 	authorID := r.URL.Query().Get("author_id")
+	sortOption := r.URL.Query().Get("sort")
+
+	if sortOption == "" {
+		sortOption = "asc"
+	}
+
+	if sortOption != "asc" && sortOption != "desc" {
+		log.Printf("Error sort must be either 'asc', 'desc' or empty")
+		respondWithError(w, http.StatusBadRequest, "wrong sort query")
+		return
+	}
 
 	chirpsSlice := []database.Chirp{}
 
@@ -75,6 +87,16 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 			UserID: chirp.UserID,
 		}
 		chirpsSliceReturn = append(chirpsSliceReturn, chirpJSON)
+	}
+
+	if sortOption == "asc" {
+		sort.Slice(chirpsSliceReturn, func(i, j int) bool {
+			return chirpsSliceReturn[i].CreatedAt.Before(chirpsSliceReturn[j].CreatedAt)
+		})
+	} else {
+		sort.Slice(chirpsSliceReturn, func(i, j int) bool {
+			return chirpsSliceReturn[j].CreatedAt.Before(chirpsSliceReturn[i].CreatedAt)
+		})
 	}
 
 	respondWithJSON(w, http.StatusOK, chirpsSliceReturn)
