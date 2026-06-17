@@ -17,6 +17,7 @@ type apiConfig struct {
 	databaseQueries *database.Queries
 	platform string
 	jwtKey string
+	polkaKey string
 }
 
 func main() {
@@ -28,6 +29,7 @@ func buildAndStartServer() {
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
 	jwtKey := os.Getenv("JWT_SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Printf("Error connecting to database: %v", err)
@@ -40,6 +42,7 @@ func buildAndStartServer() {
 		databaseQueries: dbQueries,
 		platform: platform,
 		jwtKey: jwtKey,
+		polkaKey: polkaKey,
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
